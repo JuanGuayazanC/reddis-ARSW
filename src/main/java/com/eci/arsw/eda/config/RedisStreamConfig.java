@@ -42,7 +42,16 @@ public class RedisStreamConfig {
                         .createGroup(STREAM_KEY, ReadOffset.latest(), group);
                 System.out.println("[Redis] Grupo creado: " + group);
             } catch (Exception e) {
-                if (e.getMessage() != null && e.getMessage().contains("BUSYGROUP")) {
+                Throwable cause = e;
+                boolean busyGroup = false;
+                while (cause != null) {
+                    if (cause.getMessage() != null && cause.getMessage().contains("BUSYGROUP")) {
+                        busyGroup = true;
+                        break;
+                    }
+                    cause = cause.getCause();
+                }
+                if (busyGroup) {
                     System.out.println("[Redis] Grupo ya existe: " + group);
                 } else {
                     throw e;
