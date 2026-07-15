@@ -109,28 +109,3 @@ curl http://localhost:8080/api/transferencias/auditados
 [Auditoria]       Guardado: transferencia abc-123 por 500.00 COP
 ```
 
----
-
-## Evidencias
-
-> Nota: estas capturas provienen del laboratorio de Kafka (`KAFKA-ARSW`), no de
-> este proyecto de Redis Streams. Se incluyen aquí a solicitud explícita, no
-> como evidencia de ejecución de este laboratorio.
-
-**Cluster / UI del broker de mensajería**
-
-![Cluster](evidencias/03-kafka-ui-cluster.png)
-
-**Topics**
-
-![Topics](evidencias/04-topics.png)
-
-**Llamadas curl (equivalente a probar el endpoint de publicación)**
-
-![curl 1](evidencias/05a-curl-order-cus-01.png)
-![curl 2](evidencias/05b-curl-order-cus-02.png)
-![curl 3](evidencias/05c-curl-order-cus-03.png)
-
-**Consumer groups / lag**
-
-![Consumer groups](evidencias/09-consumer-groups-lag.png)
