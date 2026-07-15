@@ -114,33 +114,7 @@ curl http://localhost:8080/api/transferencias/auditados
 
 ---
 
-## Evidence
-
-> Note: these screenshots come from the Kafka lab (`KAFKA-ARSW`), not from this
-> Redis Streams project. They are included here at explicit request, not as
-> execution evidence for this lab.
-
-**Cluster / messaging broker UI**
-
-![Cluster](evidencias/03-kafka-ui-cluster.png)
-
-**Topics**
-
-![Topics](evidencias/04-topics.png)
-
-**curl calls (equivalent to testing the publish endpoint)**
-
-![curl 1](evidencias/05a-curl-order-cus-01.png)
-![curl 2](evidencias/05b-curl-order-cus-02.png)
-![curl 3](evidencias/05c-curl-order-cus-03.png)
-
-**Consumer groups / lag**
-
-![Consumer groups](evidencias/09-consumer-groups-lag.png)
-
----
-
-## Real evidence from this lab (Redis Streams)
+## Evidence from this lab (Redis Streams)
 
 Actual run from `2026-07-15`, with Redis 7 running in Docker (`redis-eda`) and
 the app started with `mvn spring-boot:run`.
