@@ -1,53 +1,54 @@
-# EDA con Redis Streams — Demo Bancaria
+# EDA with Redis Streams — Banking Demo
 
-Ejemplo de arquitectura orientada por eventos (EDA) con Spring Boot y Redis Streams.
-Un ente **produce** un evento de transferencia bancaria, Redis lo transporta,
-y tres entes independientes lo **consumen**.
+Example of an event-driven architecture (EDA) built with Spring Boot and Redis
+Streams. One party **produces** a bank transfer event, Redis carries it, and
+three independent parties **consume** it.
 
 ```
-Productor  ──XADD──►  Redis Stream  ──XREADGROUP──►  FraudeConsumer
+Producer  ──XADD──►  Redis Stream  ──XREADGROUP──►  FraudeConsumer
                                                   ──XREADGROUP──►  NotificacionesConsumer
                                                   ──XREADGROUP──►  AuditoriaConsumer
 ```
 
 ---
 
-## Cómo funciona
+## How it works
 
-### Productor
-`TransferenciaProducer` recibe un evento `TransferenciaCreada` y lo publica
-en el stream `banco.transferencias` con `XADD`. Redis le asigna un ID único.
+### Producer
+`TransferenciaProducer` receives a `TransferenciaCreada` event and publishes it
+to the `banco.transferencias` stream with `XADD`. Redis assigns it a unique ID.
 
 ### Redis Stream
-Actúa como canal de mensajes. Tiene tres **consumer groups** (uno por consumidor).
-Cada grupo recibe todos los mensajes de forma independiente.
+Acts as the message channel. It has three **consumer groups** (one per
+consumer). Each group receives every message independently.
 
-### Consumidores
-Cada uno corre en su propio hilo, lee con `XREADGROUP` y confirma con `XACK`.
+### Consumers
+Each one runs on its own thread, reads with `XREADGROUP`, and confirms with
+`XACK`.
 
-| Consumidor              | Qué hace                                            |
-|-------------------------|-----------------------------------------------------|
-| `FraudeConsumer`        | Alerta si el monto supera 10.000                    |
-| `NotificacionesConsumer`| Simula una notificación al destinatario             |
-| `AuditoriaConsumer`     | Guarda el evento en una lista en memoria            |
+| Consumer                 | What it does                                     |
+|---------------------------|--------------------------------------------------|
+| `FraudeConsumer`          | Raises an alert if the amount exceeds 10,000     |
+| `NotificacionesConsumer`  | Simulates a notification to the recipient        |
+| `AuditoriaConsumer`       | Stores the event in an in-memory list            |
 
 ---
 
-## Estructura del proyecto
+## Project structure
 
 ```
 com.eci.arsw.eda
-├── domain/      TransferenciaCreada  (el evento)
-├── config/      RedisStreamConfig    (crea el stream y los grupos al arrancar)
+├── domain/      TransferenciaCreada  (the event)
+├── config/      RedisStreamConfig    (creates the stream and groups on startup)
 ├── producer/    TransferenciaProducer
 ├── consumer/    BaseConsumer, FraudeConsumer, NotificacionesConsumer, AuditoriaConsumer
-├── manager/     ConsumerManager      (lanza los hilos)
+├── manager/     ConsumerManager      (launches the threads)
 └── controller/  TransferenciaController
 ```
 
 ---
 
-## Levantar Redis con Docker
+## Start Redis with Docker
 
 ```bash
 docker run --name redis-eda -p 6379:6379 -d redis:7
@@ -55,7 +56,7 @@ docker run --name redis-eda -p 6379:6379 -d redis:7
 
 ---
 
-## Correr la aplicación
+## Run the application
 
 ```bash
 mvn spring-boot:run
@@ -65,42 +66,42 @@ mvn spring-boot:run
 
 ## Endpoints
 
-| Método | URL                           | Descripción                          |
-|--------|-------------------------------|--------------------------------------|
-| POST   | `/api/transferencias`         | Publica un evento (body opcional)    |
-| GET    | `/api/transferencias/auditados` | Total guardado por auditoría       |
+| Method | URL                              | Description                        |
+|--------|-----------------------------------|-------------------------------------|
+| POST   | `/api/transferencias`             | Publishes an event (optional body) |
+| GET    | `/api/transferencias/auditados`   | Total stored by the audit consumer |
 
 ---
 
-## Probar con curl
+## Try it with curl
 
-**Publicar una transferencia:**
+**Publish a transfer:**
 ```bash
 curl -s -X POST http://localhost:8080/api/transferencias \
   -H "Content-Type: application/json" \
   -d '{"from":"ACC-001","to":"ACC-002","amount":"500.00","currency":"COP"}'
 ```
 
-**Sin body (usa valores demo):**
+**Without a body (uses demo values):**
 ```bash
 curl -s -X POST http://localhost:8080/api/transferencias
 ```
 
-**Publicar una transferencia sospechosa (activa alerta de fraude):**
+**Publish a suspicious transfer (triggers the fraud alert):**
 ```bash
 curl -s -X POST http://localhost:8080/api/transferencias \
   -H "Content-Type: application/json" \
   -d '{"from":"ACC-001","to":"ACC-099","amount":"50000.00","currency":"COP"}'
 ```
 
-**Ver cuántas transferencias auditó el AuditoriaConsumer:**
+**Check how many transfers `AuditoriaConsumer` has audited:**
 ```bash
 curl http://localhost:8080/api/transferencias/auditados
 ```
 
 ---
 
-## Salida esperada en consola
+## Expected console output
 
 ```
 [Productor]       Evento publicado en Redis -> 1750710234567-0
@@ -108,16 +109,18 @@ curl http://localhost:8080/api/transferencias/auditados
 [Notificaciones]  Enviando notificacion a 'ACC-002': recibiste 500.00 COP de 'ACC-001'
 [Auditoria]       Guardado: transferencia abc-123 por 500.00 COP
 ```
+*(Log tags and messages are printed in Spanish by the application itself; see
+[main.java source](src/main/java/com/eci/arsw/eda) for the exact strings.)*
 
 ---
 
-## Evidencias
+## Evidence
 
-> Nota: estas capturas provienen del laboratorio de Kafka (`KAFKA-ARSW`), no de
-> este proyecto de Redis Streams. Se incluyen aquí a solicitud explícita, no
-> como evidencia de ejecución de este laboratorio.
+> Note: these screenshots come from the Kafka lab (`KAFKA-ARSW`), not from this
+> Redis Streams project. They are included here at explicit request, not as
+> execution evidence for this lab.
 
-**Cluster / UI del broker de mensajería**
+**Cluster / messaging broker UI**
 
 ![Cluster](evidencias/03-kafka-ui-cluster.png)
 
@@ -125,7 +128,7 @@ curl http://localhost:8080/api/transferencias/auditados
 
 ![Topics](evidencias/04-topics.png)
 
-**Llamadas curl (equivalente a probar el endpoint de publicación)**
+**curl calls (equivalent to testing the publish endpoint)**
 
 ![curl 1](evidencias/05a-curl-order-cus-01.png)
 ![curl 2](evidencias/05b-curl-order-cus-02.png)
@@ -137,12 +140,16 @@ curl http://localhost:8080/api/transferencias/auditados
 
 ---
 
-## Evidencias reales de este laboratorio (Redis Streams)
+## Real evidence from this lab (Redis Streams)
 
-Ejecución real del `2026-07-15`, con Redis 7 corriendo en Docker (`redis-eda`) y la
-app levantada con `mvn spring-boot:run`.
+Actual run from `2026-07-15`, with Redis 7 running in Docker (`redis-eda`) and
+the app started with `mvn spring-boot:run`.
 
-### 1. Arranque: creación/verificación de los 3 grupos de consumidores
+*(The raw command output blocks below are the application's real console
+output and Redis' real reply — they were captured verbatim and left untranslated
+so they remain checkable evidence, not a paraphrase.)*
+
+### 1. Startup: creating/verifying the 3 consumer groups
 
 ```
 [ConsumerManager] Consumidores iniciados
@@ -154,9 +161,9 @@ app levantada con `mvn spring-boot:run`.
 [Redis] Grupo ya existe: auditoria-group
 ```
 
-### 2. Flujo completo: publicar → persistir → consumir → confirmar
+### 2. Full flow: publish → persist → consume → acknowledge
 
-**Request 1 — transferencia normal:**
+**Request 1 — regular transfer:**
 ```bash
 curl -s -X POST http://localhost:8080/api/transferencias \
   -H "Content-Type: application/json" \
@@ -166,7 +173,7 @@ curl -s -X POST http://localhost:8080/api/transferencias \
 {"recordId":"1784093069684-0","currency":"COP","amount":500.00,"eventId":"60964b9b-db0d-4cb9-82b6-dd0ae3f36507","transferId":"c8f49d25-0fb3-4c74-8ca6-281001d9f908"}
 ```
 
-**Request 2 — transferencia sospechosa (activa alerta de fraude):**
+**Request 2 — suspicious transfer (triggers the fraud alert):**
 ```bash
 curl -s -X POST http://localhost:8080/api/transferencias \
   -H "Content-Type: application/json" \
@@ -176,7 +183,8 @@ curl -s -X POST http://localhost:8080/api/transferencias \
 {"recordId":"1784093069844-0","currency":"COP","amount":50000.00,"eventId":"16df3efa-5768-43c2-bfd6-1b9dbe17b5dc","transferId":"b513711e-f152-4ac8-bca2-bdf32a0d5fa1"}
 ```
 
-**Salida real de consola de la app (los 3 consumidores reaccionan a cada evento, cada uno con su propio grupo):**
+**Real app console output (all three consumers react to each event, each with
+its own group):**
 ```
 [Productor] Evento publicado en Redis -> 1784093069684-0
 [Notificaciones] Enviando notificacion a 'ACC-002': recibiste 500,00 COP de 'ACC-001'
@@ -188,20 +196,20 @@ curl -s -X POST http://localhost:8080/api/transferencias \
 [Notificaciones] Enviando notificacion a 'ACC-099': recibiste 50000,00 COP de 'ACC-001'
 ```
 
-**Verificación del consumidor de auditoría:**
+**Checking the audit consumer:**
 ```bash
 curl -s http://localhost:8080/api/transferencias/auditados
 # {"totalAuditados":2}
 ```
 
-### 3. Actividad sugerida: simular la caída de un consumidor antes del `XACK`
+### 3. Suggested activity: simulate a consumer crashing before `XACK`
 
-Para no interferir con los grupos reales de la app (`fraude-group`, `notif-group`,
-`auditoria-group`), la simulación se hizo con un grupo de consumidores temporal
-(`demo-crash-group`) sobre el mismo stream `banco.transferencias`, usando
-`redis-cli` directamente contra el contenedor.
+To avoid interfering with the app's real groups (`fraude-group`,
+`notif-group`, `auditoria-group`), the simulation used a disposable consumer
+group (`demo-crash-group`) on the same `banco.transferencias` stream, driven
+directly with `redis-cli` against the container.
 
-**Paso 0 — crear el grupo de la demo y publicar un evento nuevo:**
+**Step 0 — create the demo group and publish a fresh event:**
 ```bash
 docker exec redis-eda redis-cli XGROUP CREATE banco.transferencias demo-crash-group '$'
 curl -s -X POST http://localhost:8080/api/transferencias \
@@ -213,7 +221,7 @@ OK
 {"recordId":"1784093093854-0", ...}
 ```
 
-**Paso 1 — `crash-consumer-1` lee el evento pero "muere" antes de hacer `XACK`:**
+**Step 1 — `crash-consumer-1` reads the event but "dies" before calling `XACK`:**
 ```bash
 docker exec redis-eda redis-cli XREADGROUP GROUP demo-crash-group crash-consumer-1 \
   COUNT 1 STREAMS banco.transferencias '>'
@@ -228,31 +236,32 @@ to      ACC-888
 ...
 ```
 
-**Paso 2 — se comprueba que el evento quedó pendiente (sin confirmar):**
+**Step 2 — confirm the event is stuck pending (unacknowledged):**
 ```bash
 docker exec redis-eda redis-cli XPENDING banco.transferencias demo-crash-group
 ```
 ```
-1                          # 1 mensaje pendiente
-1784093093854-0            # ID menor
-1784093093854-0            # ID mayor
-crash-consumer-1            1   # asignado a crash-consumer-1, nunca confirmado
+1                          # 1 pending message
+1784093093854-0            # lowest ID
+1784093093854-0            # highest ID
+crash-consumer-1            1   # assigned to crash-consumer-1, never acknowledged
 ```
 
-**Paso 3 — `recovery-consumer-1` reclama el mensaje huérfano con `XCLAIM` y lo confirma:**
+**Step 3 — `recovery-consumer-1` claims the orphaned message with `XCLAIM` and
+acknowledges it:**
 ```bash
 docker exec redis-eda redis-cli XCLAIM banco.transferencias demo-crash-group recovery-consumer-1 0 1784093093854-0
 docker exec redis-eda redis-cli XACK banco.transferencias demo-crash-group 1784093093854-0
 ```
 
-**Paso 4 — ya no quedan mensajes pendientes:**
+**Step 4 — no pending messages remain:**
 ```bash
 docker exec redis-eda redis-cli XPENDING banco.transferencias demo-crash-group
-# (vacío)
+# (empty)
 ```
 
-**Conclusión de la simulación:** confirma lo que dice la teoría (slide 8/9 de la
-clase) — Redis Streams no pierde el evento si el consumidor cae antes del `XACK`;
-queda visible en `XPENDING` y cualquier otro consumidor del grupo puede
-reclamarlo con `XCLAIM` y reintentar el procesamiento sin duplicar la publicación
-original.
+**Conclusion of the simulation:** this confirms what the theory says (slides
+8-9 of the lecture) — Redis Streams does not lose the event if a consumer
+crashes before `XACK`; it stays visible in `XPENDING`, and any other consumer
+in the group can claim it with `XCLAIM` and retry processing without
+duplicating the original publish.
