@@ -21,28 +21,6 @@ Systems Engineering
 Colombian School of Engineering Julio Garavito  
 2026-i
 
-## How it works
-
-### Producer
-`TransferenciaProducer` receives a `TransferenciaCreada` event and publishes it
-to the `banco.transferencias` stream with `XADD`. Redis assigns it a unique ID.
-
-### Redis Stream
-Acts as the message channel. It has three **consumer groups** (one per
-consumer). Each group receives every message independently.
-
-### Consumers
-Each one runs on its own thread, reads with `XREADGROUP`, and confirms with
-`XACK`.
-
-| Consumer                 | What it does                                     |
-|---------------------------|--------------------------------------------------|
-| `FraudeConsumer`          | Raises an alert if the amount exceeds 10,000     |
-| `NotificacionesConsumer`  | Simulates a notification to the recipient        |
-| `AuditoriaConsumer`       | Stores the event in an in-memory list            |
-
----
-
 ## Project structure
 
 ```
@@ -70,6 +48,28 @@ docker run --name redis-eda -p 6379:6379 -d redis:7
 ```bash
 mvn spring-boot:run
 ```
+
+---
+
+## How it works
+
+### Producer
+`TransferenciaProducer` receives a `TransferenciaCreada` event and publishes it
+to the `banco.transferencias` stream with `XADD`. Redis assigns it a unique ID.
+
+### Redis Stream
+Acts as the message channel. It has three **consumer groups** (one per
+consumer). Each group receives every message independently.
+
+### Consumers
+Each one runs on its own thread, reads with `XREADGROUP`, and confirms with
+`XACK`.
+
+| Consumer                 | What it does                                     |
+|---------------------------|--------------------------------------------------|
+| `FraudeConsumer`          | Raises an alert if the amount exceeds 10,000     |
+| `NotificacionesConsumer`  | Simulates a notification to the recipient        |
+| `AuditoriaConsumer`       | Stores the event in an in-memory list            |
 
 ---
 
