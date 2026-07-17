@@ -37,6 +37,15 @@ com.eci.arsw.eda
 
 ## Start Redis with Docker
 
+Clone the repository, enter it, and switch to this branch (everything below
+runs from the repo root — no subfolder to `cd` into):
+
+```bash
+git clone https://github.com/JuanGuayazanC/reddis-ARSW.git
+cd reddis-ARSW
+git checkout develop
+```
+
 ```bash
 docker run --name redis-eda -p 6379:6379 -d redis:7
 ```
