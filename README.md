@@ -21,27 +21,6 @@ Ingeniería de Sistemas
 Escuela Colombiana de Ingeniería Julio Garavito  
 2026-i
 
-## Cómo funciona
-
-### Productor
-`TransferenciaProducer` recibe un evento `TransferenciaCreada` y lo publica
-en el stream `banco.transferencias` con `XADD`. Redis le asigna un ID único.
-
-### Redis Stream
-Actúa como canal de mensajes. Tiene tres **consumer groups** (uno por consumidor).
-Cada grupo recibe todos los mensajes de forma independiente.
-
-### Consumidores
-Cada uno corre en su propio hilo, lee con `XREADGROUP` y confirma con `XACK`.
-
-| Consumidor              | Qué hace                                            |
-|-------------------------|-----------------------------------------------------|
-| `FraudeConsumer`        | Alerta si el monto supera 10.000                    |
-| `NotificacionesConsumer`| Simula una notificación al destinatario             |
-| `AuditoriaConsumer`     | Guarda el evento en una lista en memoria            |
-
----
-
 ## Estructura del proyecto
 
 ```
@@ -69,6 +48,27 @@ docker run --name redis-eda -p 6379:6379 -d redis:7
 ```bash
 mvn spring-boot:run
 ```
+
+---
+
+## Cómo funciona
+
+### Productor
+`TransferenciaProducer` recibe un evento `TransferenciaCreada` y lo publica
+en el stream `banco.transferencias` con `XADD`. Redis le asigna un ID único.
+
+### Redis Stream
+Actúa como canal de mensajes. Tiene tres **consumer groups** (uno por consumidor).
+Cada grupo recibe todos los mensajes de forma independiente.
+
+### Consumidores
+Cada uno corre en su propio hilo, lee con `XREADGROUP` y confirma con `XACK`.
+
+| Consumidor              | Qué hace                                            |
+|-------------------------|-----------------------------------------------------|
+| `FraudeConsumer`        | Alerta si el monto supera 10.000                    |
+| `NotificacionesConsumer`| Simula una notificación al destinatario             |
+| `AuditoriaConsumer`     | Guarda el evento en una lista en memoria            |
 
 ---
 
