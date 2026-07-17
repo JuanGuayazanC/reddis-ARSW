@@ -12,6 +12,15 @@ Productor  ──XADD──►  Redis Stream  ──XREADGROUP──►  FraudeC
 
 ---
 
+## Autor
+
+JUAN SEBASTIÁN GUAYAZÁN CLAVIJO  
+Arquitecturas de Software (ISIS ARSW - 101)  
+Decanatura de Ingeniería de Sistemas  
+Ingeniería de Sistemas  
+Escuela Colombiana de Ingeniería Julio Garavito  
+2026-i
+
 ## Cómo funciona
 
 ### Productor
