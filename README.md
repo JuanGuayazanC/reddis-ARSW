@@ -37,6 +37,15 @@ com.eci.arsw.eda
 
 ## Levantar Redis con Docker
 
+Clona el repositorio, entra a la carpeta y cambia a esta rama (todo lo que
+sigue corre desde la raíz del repo — no hay que entrar a ninguna subcarpeta):
+
+```bash
+git clone https://github.com/JuanGuayazanC/reddis-ARSW.git
+cd reddis-ARSW
+git checkout develop-es
+```
+
 ```bash
 docker run --name redis-eda -p 6379:6379 -d redis:7
 ```
